@@ -1510,9 +1510,22 @@ def down():
     die("The HID service didn't stop.")
 
 
+_prctl = None  # libc's prctl, loaded by up_linux before it starts threads (a preexec_fn mustn't import)
+
+
+def _die_with_parent():
+    """In a child of `phoneuse up`/`serve` (Linux): get SIGTERM when it dies, even by SIGKILL, so no hub,
+    UxPlay or browser mirror is left holding the ports (the next start would refuse: "already running")."""
+    if _prctl is not None:
+        _prctl(1, 15)  # PR_SET_PDEATHSIG, SIGTERM
+
+
 def up_linux(headless=False):
     """In bridge-only mode the HID daemon runs here as the user; otherwise it is the root
     service from `phoneuse install`."""
+    global _prctl
+    import ctypes
+    _prctl = ctypes.CDLL(None).prctl
     from .config import USER_DAEMON
     if not USER_DAEMON and subprocess.run(["systemctl", "is-active", "--quiet", "phoneuse-hid"]).returncode != 0:
         die("Bluetooth HID service isn't running. Run: phoneuse install")
@@ -1538,7 +1551,7 @@ def up_linux(headless=False):
         mtimes = lambda: [os.path.getmtime(f) for f in files if os.path.exists(f)]
         while not stop.is_set():
             seen = mtimes()
-            procs[module] = subprocess.Popen([sys.executable, "-m", f"phoneuse.{module}"], cwd=ROOT)
+            procs[module] = subprocess.Popen([sys.executable, "-m", f"phoneuse.{module}"], cwd=ROOT, preexec_fn=_die_with_parent)
             while procs[module].poll() is None and not stop.is_set():
                 time.sleep(1)
                 if mtimes() != seen:
@@ -1581,7 +1594,7 @@ def up_linux(headless=False):
         # The video hub (hub.py): decodes the phone's stream and serves it to the
         # window and the browser mirror. Started first; rarely restarts.
         while not stop.is_set():
-            procs["hub"] = subprocess.Popen([sys.executable, "-m", "phoneuse.hub"], cwd=ROOT)
+            procs["hub"] = subprocess.Popen([sys.executable, "-m", "phoneuse.hub"], cwd=ROOT, preexec_fn=_die_with_parent)
             rc = procs["hub"].wait()
             if stop.is_set():
                 break
@@ -1600,7 +1613,7 @@ def up_linux(headless=False):
         # The mirror window (window.py) outlives UxPlay restarts and phone
         # reconnects; it waits for the next stream by itself.
         while not stop.is_set():
-            procs["window"] = subprocess.Popen([sys.executable, "-m", "phoneuse.window"], cwd=ROOT)
+            procs["window"] = subprocess.Popen([sys.executable, "-m", "phoneuse.window"], cwd=ROOT, preexec_fn=_die_with_parent)
             rc = procs["window"].wait()
             if stop.is_set():
                 break
@@ -1639,10 +1652,10 @@ def up_linux(headless=False):
                 out = open(runtime_path("phoneuse-gst-trace.log"), "w")
             if out is subprocess.DEVNULL:  # read UxPlay's output for the sender's name
                 procs["mirror"] = subprocess.Popen(UNBUFFERED + args, stdout=subprocess.PIPE,
-                                                   stderr=subprocess.STDOUT, env=env, text=True, errors="replace")
+                                                   stderr=subprocess.STDOUT, env=env, text=True, errors="replace", preexec_fn=_die_with_parent)
                 threading.Thread(target=follow_sender, args=(procs["mirror"].stdout,), daemon=True).start()
             else:
-                procs["mirror"] = subprocess.Popen(args, stdout=out, stderr=out, env=env)
+                procs["mirror"] = subprocess.Popen(args, stdout=out, stderr=out, env=env, preexec_fn=_die_with_parent)
             with open(UXPLAY_PID, "w") as f:
                 f.write(str(procs["mirror"].pid))
             mine = procs["mirror"]
@@ -1684,7 +1697,7 @@ def up_linux(headless=False):
         mtimes = lambda: [os.path.getmtime(f) for f in watched if os.path.exists(f)]
         while not stop.is_set():
             seen = mtimes()
-            procs["clicker"] = subprocess.Popen([sys.executable, "-m", "phoneuse.mirror_input"], cwd=ROOT)
+            procs["clicker"] = subprocess.Popen([sys.executable, "-m", "phoneuse.mirror_input"], cwd=ROOT, preexec_fn=_die_with_parent)
             while procs["clicker"].poll() is None:
                 time.sleep(1)
                 if mtimes() != seen:
