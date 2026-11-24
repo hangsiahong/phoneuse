@@ -162,6 +162,9 @@ class Mirror(Gtk.Application):
         win.set_default_size(w, h)
         self.phone = Phone()
         win.set_child(self.phone)
+        if not os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):  # elsewhere the window takes its own input
+            from . import gtk_input
+            gtk_input.attach(win, self.phone)
         self.start()
         win.present()
         GLib.timeout_add(500, self.phone.check_mirroring)
@@ -204,7 +207,8 @@ class Mirror(Gtk.Application):
 def main():
     Gst.init(None)
     GLib.set_prgname(APP_ID)  # Wayland app id = Hyprland window class
-    window_rule()
+    if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        window_rule()
     dec = os.environ.get("PHONEUSE_DECODER") or decoder()
     Mirror(dec).run([])
 
