@@ -463,7 +463,7 @@ def connect_out():
         if hid.connected:
             return "already connected"
         errors = []
-        for addr in [a for a in paired_devices() if wanted(a)]:
+        for addr in [a for a in paired_devices() if wanted(a) and could_be_host(a)]:
             socks = []
             try:
                 for psm in (PSM_CTRL, PSM_INTR):
@@ -594,6 +594,23 @@ def disconnect_all():
                 log("disconnected", str(d["Address"]), "(input goes through the bridge)")
             except dbus.DBusException as e:
                 log("couldn't disconnect", str(d["Address"]), e)
+
+
+# Paired devices that can't be a HID host: paging them wakes nothing and keeps the radio busy
+# (AirPods, mice and keyboards this PC used before phoneuse took its input profile).
+NOT_A_HOST = ("audio-", "input-", "printer", "camera", "scanner")
+
+
+def could_be_host(addr):
+    """Whether to page this paired device for the HID channels: phones, tablets, computers,
+    and devices whose kind BlueZ doesn't know."""
+    try:
+        props = dbus.Interface(bus.get_object("org.bluez", "/org/bluez/hci0/dev_" + addr.upper().replace(":", "_")),
+                               "org.freedesktop.DBus.Properties")
+        icon = str(props.Get("org.bluez.Device1", "Icon"))
+    except dbus.DBusException:  # no Icon property: unknown kind
+        return True
+    return not icon.startswith(NOT_A_HOST)
 
 
 def paired_devices():

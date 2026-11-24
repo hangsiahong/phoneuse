@@ -939,6 +939,7 @@ def app(mirror):
     def picture_state():
         return {"live": mirror.live(), "stale": mirror.stale, "paused": mirror.taken_over,
                 "landscape": mirror.screen[0] > mirror.screen[1],
+                "window": [round(x, 4) for x in screen.design_size(mirror.screen)],  # the window's shape, bezel included
                 "frame_age": round(time.time() - mirror.last_frame_at, 1) if mirror.last_frame_at else None}
     a.router.add_get("/api/picture", lambda _r: web.json_response(picture_state()))
     a.router.add_post("/api/agent/takeover", agent_takeover)
