@@ -69,6 +69,18 @@ class MacVision:
             return {"error": "unknown op"}
 
 
+def _cudnn_loads():
+    """onnxruntime-gpu lists CUDA even without cuDNN, then fails on the first Conv; use the CPU then."""
+    import ctypes
+    for name in ("libcudnn.so.9", "libcudnn.so"):
+        try:
+            ctypes.CDLL(name)
+            return True
+        except OSError:
+            pass
+    return False
+
+
 class Vision:
     def __init__(self):
         import threading
@@ -87,7 +99,7 @@ class Vision:
         # NVIDIA GPU (onnxruntime-gpu) a screen takes ~0.18 s, on the CPU ~1.2 s.
         params = {"Global.use_cls": False, "Det.limit_side_len": 960,
                   "EngineConfig.onnxruntime.intra_op_num_threads": min(8, os.cpu_count() or 4)}
-        if "CUDAExecutionProvider" in onnxruntime.get_available_providers():
+        if "CUDAExecutionProvider" in onnxruntime.get_available_providers() and _cudnn_loads():
             params["EngineConfig.onnxruntime.use_cuda"] = True
         self.ocr = RapidOCR(params=params)
         self.ocr_device = "cuda" if params.get("EngineConfig.onnxruntime.use_cuda") else "cpu"
