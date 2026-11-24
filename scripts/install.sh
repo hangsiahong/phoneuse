@@ -58,7 +58,7 @@ Requires=bluetooth.service
 PartOf=bluetooth.service
 
 [Service]
-Environment=PHONEUSE_NAME=$NAME
+Environment="PHONEUSE_NAME=$NAME"
 Environment=HID_GID=${GID:-0}
 WorkingDirectory=$ROOT
 ExecStart=/usr/bin/python3 -u -m phoneuse.hid_daemon
