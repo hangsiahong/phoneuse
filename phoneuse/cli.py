@@ -169,11 +169,14 @@ def mirror_args():
     changed since `phoneuse up` started)."""
     pts, _ = config.screen_points()
     k = 2 if min(pts) >= 600 else 3  # pixels per point: iPads are @2x (3x made the iPad send 2.25x its own pixels)
+    # A square display: iOS fits the screen inside it, so upright and sideways both arrive at full
+    # resolution (a portrait-shaped one shrank a sideways screen to under half its pixels).
+    side = max(pts) * k
     # -p: fixed ports (from airplay_port, which moves UxPlay off the ports the system's own AirPlay
     # receiver holds, config.py); -nh: no "@hostname" after the name
     args = [uxplay_path(), "-p", *([str(CFG["airplay_port"])] if CFG.get("airplay_port") else []), "-n", NAME, "-nh",
             "-vrtp", f"config-interval=1 pt=96 mtu={screen.RTP_MTU} ! udpsink host=127.0.0.1 port={screen.HUB_RTP_PORT} sync=false",
-            "-vsync", "no", "-s", f"{pts[0] * k}x{pts[1] * k}@60", "-fps", "60"]
+            "-vsync", "no", "-s", f"{side}x{side}@60", "-fps", "60"]
     if IS_WINDOWS:
         args += ["-m", device_id()]
     # Audio: mirrored audio already plays unsynced (-vsync no); keep the sink's buffer
