@@ -1,59 +1,54 @@
 <img src="packaging/icons/hicolor/256x256/apps/co.lxe.PhoneUse.png" width="128" alt="Phone Use icon: a sleepy cloud hugging a phone">
 
-# Phone Use
+# Phone Use (hangsiahong fork)
 
-**[phoneuse.tech](https://phoneuse.tech)** · **[Download](https://github.com/lxe/phoneuse/releases/latest)**
+Use your iPhone from your Linux desktop: its screen in a window over AirPlay, and your
+laptop's own Bluetooth as the phone's mouse and keyboard. Click to tap, drag to swipe,
+scroll, and type. Agents (Claude Code, Codex) can drive it too, with your permission.
+No jailbreak, no cable, no extra board.
 
-Let your AI agent, or you, use your iPhone from your computer. Your iPhone's screen
-shows up in a window, and Claude Code, Codex and other agents can tap and type on it,
-with your permission. No jailbreak and no cable.
+This is a fork of [lxe/phoneuse](https://github.com/lxe/phoneuse) by Aleksey Smolenchuk,
+developed on its own from here. It runs from source on Linux; the iPhone app is still
+[Phone Use on the App Store](https://apps.apple.com/us/app/phone-use/id6832337610).
 
-Phone Use is alpha software. Please [report what breaks](https://github.com/lxe/phoneuse/issues).
+## What this fork adds
 
-## Install
+- **Any Wayland compositor, not only Hyprland.** On niri, Sway, GNOME or KDE the mirror
+  window takes the mouse, touchpad and keys itself, through GTK (`phoneuse/gtk_input.py`):
+  hover moves the phone's pointer, click taps, drag swipes (also past the window's edge),
+  wheel and two-finger scroll scroll, and keys type while the window has focus.
+- **Clean restarts.** Everything `phoneuse serve` starts exits with it, even when it is
+  killed, so a crashed or restarted `serve` doesn't leave the ports held ("already running").
+- **Which way the phone faces** in `GET :8777/api/picture` (`"landscape": true|false`), so
+  a desktop shell can turn the window with the phone.
+- Screen reading falls back to the CPU when the GPU's cuDNN won't load.
+- [ansai shell](https://github.com/hangsiahong/ansai-shell) runs it for you: Settings › Displays ›
+  Control an iPhone starts `phoneuse serve`, opens the window when the phone mirrors,
+  floats it phone-shaped at the right and reshapes it when the phone turns.
 
-1. Download Phone Use for your computer from the
-   [latest release](https://github.com/lxe/phoneuse/releases/latest):
-   - **Linux:** `PhoneUse-<version>-x86_64.flatpak`, then
-     `flatpak install --user ./PhoneUse-<version>-x86_64.flatpak`
-   - **Mac** (macOS 15 or later): `PhoneUse-<version>-mac.dmg`. Drag Phone Use to Applications.
-     The Mac app needs [the bridge](#the-bridge).
-   - **Windows:** from source for now, see [docs/WINDOWS.md](docs/WINDOWS.md).
-2. Install the Phone Use iPhone app from the
-   [App Store](https://apps.apple.com/us/app/phone-use/id6832337610).
-3. Open Phone Use on your computer. It walks you through the rest: connecting the
-   keyboard and mouse, pairing the iPhone app, and starting Screen Mirroring.
+## Install (Linux, from source)
 
-Your iPhone and your computer need to be on the same Wi-Fi.
+```sh
+git clone https://github.com/hangsiahong/phoneuse.git ~/phoneuse
+ln -s ~/phoneuse/bin/phoneuse ~/.local/bin/phoneuse
+phoneuse install   # needs sudo: the Bluetooth HID service
+phoneuse up        # or `phoneuse serve` without the window
+```
 
-## Use it
+Then pair the iPhone app, connect the phone to this PC over Bluetooth, and on the iPhone
+pick **Screen Mirroring › Phone Use on &lt;your computer&gt;**.
+[docs/SOURCE.md](docs/SOURCE.md) has the requirements, firewall ports and each step.
 
-- **Yourself:** click Open iPhone. Click to tap, drag to swipe, scroll with your mouse
-  wheel, and type on your keyboard.
-- **With an agent:** click Connect Claude Code in the app. Phone Use can ask you on your
-  iPhone before an agent takes control, and you can take over at any time.
-
-## The bridge
-
-The bridge is a small board that joins your Wi-Fi and acts as your iPhone's keyboard
-and mouse, so your computer's Bluetooth stays free. Buy a
-[LilyGO T-Display](https://lilygo.cc/products/t-display) and flash it from the Linux
-app (Bridge › Flash LilyGO T-Display). [docs/BRIDGE.md](docs/BRIDGE.md) has the other
-ways to flash it and how it works.
+`phoneuse install` turns off bluetoothd's input plugin: while it is installed, the PC
+doesn't take Bluetooth mice and keyboards for itself.
 
 ## More
 
-- [Running from source](docs/SOURCE.md) and [Windows](docs/WINDOWS.md)
-- [How it works](ARCHITECTURE.md)
-- [The iPhone app and its API](docs/COMPANION.md)
-- [The website](site/README.md) · [Privacy policy](docs/PRIVACY.md)
-
-## Contributors
-
-<a href="https://github.com/lxe/phoneuse/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=lxe/phoneuse" alt="Phone Use contributors">
-</a>
+- [How it works](ARCHITECTURE.md) · [The iPhone app and its API](docs/COMPANION.md)
+- [The bridge](docs/BRIDGE.md): an ESP32 board as the phone's keyboard and mouse instead
+  of the PC's Bluetooth (optional)
+- [Windows](docs/WINDOWS.md) · [Mac](docs/MAC.md), as upstream left them; untested here
 
 ## License
 
-MIT
+MIT, as upstream. Copyright (c) 2026 Aleksey Smolenchuk; fork changes by their authors.

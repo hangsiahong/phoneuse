@@ -7,7 +7,7 @@ command instead of the app. For Windows, see [WINDOWS.md](WINDOWS.md).
 |---|---|
 | iPhone | iPhone 17 Pro, iOS 26 (Phone Use takes the screen size from the model) |
 | Linux with BlueZ | Arch Linux, BlueZ 5.87 |
-| Hyprland | 0.56 |
+| Hyprland or niri | Hyprland 0.56, niri (GTK input) |
 | UxPlay | 1.73.7 |
 | GStreamer, GTK 4, `gtk4paintablesink` | 1.28, 4.24 |
 | Python 3.11+ | `python-dbus`, `python-gobject`, `numpy`, `pillow`, `aiohttp` |
@@ -21,7 +21,7 @@ port 47700 for the bridge. The iPhone app needs TCP port 8778.
 
 1. **Install:**
    ```sh
-   git clone https://github.com/lxe/phoneuse.git ~/phoneuse
+   git clone https://github.com/hangsiahong/phoneuse.git ~/phoneuse
    ln -s ~/phoneuse/bin/phoneuse ~/.local/bin/phoneuse
    phoneuse install   # needs sudo
    ```
