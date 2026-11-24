@@ -549,9 +549,10 @@ mirror_name = [None]
 
 
 def wanted(addr):
-    """May this device use the HID channels? Only the mirroring phone, when it is paired;
-    any paired device while no phone mirrors or the mirroring one isn't paired yet."""
-    if not mirror_name[0] or not any(same_name(device_name(a), mirror_name[0]) for a in paired_devices()):
+    """May this device use the HID channels? Only the one mirroring, even before it is paired
+    (an iPad mirroring while the iPhone is still connected would get the iPad window's clicks
+    on the iPhone); any paired device while nothing mirrors."""
+    if not mirror_name[0]:
         return True
     return same_name(device_name(addr), mirror_name[0])
 
