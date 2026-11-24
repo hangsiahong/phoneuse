@@ -936,12 +936,17 @@ def app(mirror):
     a.router.add_post("/api/quit", quit_services)
     a.router.add_post("/api/agent/act", agent_act)
     a.router.add_post("/api/agent/phase", agent_phase)
-    def picture_state():
+    def picture_state(pts):
         return {"live": mirror.live(), "stale": mirror.stale, "paused": mirror.taken_over,
-                "landscape": mirror.screen[0] > mirror.screen[1],
-                "window": [round(x, 4) for x in screen.design_size(mirror.screen)],  # the window's shape, bezel included
+                "landscape": pts[0] > pts[1],
+                "window": [round(x, 4) for x in screen.design_size(pts)],  # the window's shape, bezel included
                 "frame_age": round(time.time() - mirror.last_frame_at, 1) if mirror.last_frame_at else None}
-    a.router.add_get("/api/picture", lambda _r: web.json_response(picture_state()))
+
+    async def picture(_r):
+        # The frame size now, not the watcher's last look (up to ~0.5 s old): a shell turns its window from this.
+        size = await asyncio.get_running_loop().run_in_executor(None, orientation.refresh, 0.3)
+        return web.json_response(picture_state(orientation.points_for(size) if size else mirror.screen))
+    a.router.add_get("/api/picture", picture)
     a.router.add_post("/api/agent/takeover", agent_takeover)
     a.router.add_post("/api/agent/cursor", agent_cursor)
     a.router.add_post("/api/agent/done", agent_done)
