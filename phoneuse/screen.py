@@ -40,6 +40,17 @@ TITLE_WAITING = "phoneuse mirror (not mirroring)"
 # Presses on the bezel start edge swipes (mirror_input.py).
 BEZEL = 30 / 498
 SCREEN_RADIUS = 60 / 498  # the screen's corner radius, ~48 pt on the phone
+IPAD_RADIUS_PT = 18       # an iPad's corners are much tighter: a fraction of its wider screen would eat the picture
+SQUARE_IPADS = {(768, 1024), (810, 1080), (834, 1112)}  # Home-button iPads: square corners
+
+
+def screen_radius(pts=None):
+    """The screen's corner radius as a fraction of its short side, for `pts` (points as it faces)."""
+    pts = pts or orientation.current_points()
+    short, long = sorted(pts)
+    if short < 600:  # an iPhone
+        return SCREEN_RADIUS
+    return 0 if (short, long) in SQUARE_IPADS else IPAD_RADIUS_PT / short
 
 
 def _find_hyprland():

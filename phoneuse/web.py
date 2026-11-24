@@ -465,7 +465,7 @@ class Tab:
                           "name": NAME, "screen": self.mirror.screen,
                           # the model identifier ("iPhone17,1"): the mirror window draws its frame
                           "model": mirroring_model(),
-                          "bezel": screen.BEZEL, "radius": screen.SCREEN_RADIUS})
+                          "bezel": screen.BEZEL, "radius": screen.screen_radius(self.mirror.screen)})
         asyncio.ensure_future(self.ws.send_str(msg))
 
     async def pump(self):

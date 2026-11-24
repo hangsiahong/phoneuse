@@ -119,7 +119,7 @@ class Phone(Gtk.Widget):
         # the screen, clipped to its rounded corners
         rect = Graphene.Rect().init(sx, sy, sw, sh)
         clip = Gsk.RoundedRect()
-        clip.init_from_rect(rect, screen.SCREEN_RADIUS * min(sw, sh))  # a fraction of the short side
+        clip.init_from_rect(rect, screen.screen_radius(self.points()) * min(sw, sh))  # a fraction of the short side
         snap.push_rounded_clip(clip)
         snap.append_color(BLACK, rect)
         if not self.waiting:
